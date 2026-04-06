@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python3.14 src/main.py
+uv run src/main.py
