@@ -7,13 +7,13 @@ class HTMLNode:
         self.props = props
 
     def to_html(self):
-        raise NotImplementedError
+        raise NotImplementedError("to_htlm method not implemented yet")
 
     def props_to_html(self):
-        output: str = ''
         if self.props is None:
-            return output
+            return ""
 
+        output: str = ""
         for prop in self.props:
             output += f' {prop}="{self.props[prop]}"'
 
