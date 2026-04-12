@@ -34,3 +34,10 @@ class TestSplitDelimiter(unittest.TestCase):
                     TextNode("sudo rm -rf /", TextType.CODE)
                     ]
                 )
+
+    def test_exception(self):
+        node: TextNode = TextNode("This is **supposed to fail", TextType.TEXT)
+
+        with self.assertRaises(Exception):
+            split_nodes_delimiter([node], "**", TextType.BOLD)
+

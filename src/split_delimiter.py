@@ -9,7 +9,7 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
             new_nodes.append(node) 
 
         else:
-            matching_delimiters = list(filter(lambda s: s == delimiter,node.text.split()))
+            matching_delimiters = list(filter(lambda s: delimiter in s, node.text.split(" ")))
             if len(matching_delimiters) % 2 != 0:
                 raise Exception("no matching delimiters found")
 
