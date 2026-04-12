@@ -9,17 +9,20 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
             new_nodes.append(node) 
 
         else:
-            matching_delimiters = list(filter(lambda s: delimiter in s, node.text.split(" ")))
-            if len(matching_delimiters) % 2 != 0:
-                raise Exception("no matching delimiters found")
-
+            split_nodes: list[TextNode] = []
             node_text: list[str] = node.text.split(delimiter)
-            for i in range(len(node_text)):
-                if i % 2 == 0:
-                    node_text[i]: TextNode = TextNode(node_text[i], TextType.TEXT)
-                else:
-                    node_text[i]: TextNode = TextNode(node_text[i], text_type)
 
-            new_nodes.extend(node_text)
+            if len(node_text) % 2 == 0:
+                raise Exception("invalid markdown, formatted section not closed")
+
+            for i in range(len(node_text)):
+                if node_text[i] == "":
+                    continue
+                if i % 2 == 0:
+                    split_nodes.append(TextNode(node_text[i], TextType.TEXT))
+                else:
+                    split_nodes.append(TextNode(node_text[i], text_type))
+
+            new_nodes.extend(split_nodes)
 
     return new_nodes
