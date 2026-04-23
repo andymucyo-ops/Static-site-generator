@@ -1,5 +1,5 @@
 import unittest
-from src.block_markdown import markdown_to_block
+from src.block_markdown import markdown_to_block, block_to_block_type, BlockType
 
 
 class TestMarkdownToBlock(unittest.TestCase):
@@ -21,6 +21,52 @@ class TestMarkdownToBlock(unittest.TestCase):
     def test_multiline_block(self):
         md = "line1\nline2\n\npara2"
         self.assertEqual(markdown_to_block(md), ["line1\nline2", "para2"])
+
+
+class TestBlockToBlockType(unittest.TestCase):
+    def test_heading_single_hash(self):
+        block = "# Hello"
+        self.assertEqual(block_to_block_type(block), BlockType.HEADING)
+
+    def test_heading_multiple_hashes(self):
+        block = "###### Six"
+        self.assertEqual(block_to_block_type(block), BlockType.HEADING)
+
+    def test_code_block(self):
+        block = "```\ncode\n```"
+        self.assertEqual(block_to_block_type(block), BlockType.CODE)
+
+    def test_code_block_with_indent(self):
+        block = "```\n  code\n```"
+        self.assertEqual(block_to_block_type(block), BlockType.CODE)
+
+    def test_quote(self):
+        block = "> A quote"
+        self.assertEqual(block_to_block_type(block), BlockType.QUOTE)
+
+    def test_unordered_list_single(self):
+        block = "- item\n"
+        self.assertEqual(block_to_block_type(block), BlockType.UNORDERED_LIST)
+
+    def test_unordered_list_multiple(self):
+        block = "- item1\n- item2"
+        self.assertEqual(block_to_block_type(block), BlockType.UNORDERED_LIST)
+
+    def test_ordered_list(self):
+        block = "1. first\n2. second"
+        self.assertEqual(block_to_block_type(block), BlockType.ORDERED_LIST)
+
+    def test_paragraph(self):
+        block = "Plain text"
+        self.assertEqual(block_to_block_type(block), BlockType.PARAGRAPH)
+
+    def test_heading_no_space_after_hash(self):
+        block = "#NoSpace"
+        self.assertEqual(block_to_block_type(block), BlockType.PARAGRAPH)
+
+    def test_ordered_list_no_space_after_dot(self):
+        block = "1.item"
+        self.assertEqual(block_to_block_type(block), BlockType.PARAGRAPH)
 
 
 if __name__ == "__main__":
