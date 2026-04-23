@@ -1,36 +1,48 @@
 from enum import Enum
-import re
+import textwrap
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
     HEADING = "heading"
     CODE = "code"
     QUOTE = "quote"
-    UNORDERED_LIST = "unordered list"
-    ORDERED_LIST = "ordered list"
+    U_LIST = "unordered list"
+    O_LIST = "ordered list"
 
-def markdown_to_block(markdown: str) -> list[str]:
+def markdown_to_blocks(markdown: str) -> list[str]:
     block_list: list[str] = markdown.split("\n\n")
     return list(map(lambda s: s.strip(), block_list))
 
 def block_to_block_type(block: str) -> BlockType:
-    patterns: dict = {
-            "heading":(r"#{1,6}\s(.*?)", BlockType.HEADING),
-            "code":(r"```\n([\s\S]*?)\n\s*```", BlockType.CODE),
-            "quotes":(r">\s*(.*?)", BlockType.QUOTE),
-            "undordered list":(r"(-\s.*\n)+", BlockType.UNORDERED_LIST),
-            "ordered list": (r"(\d+\.\s+.*+\n)+", BlockType.ORDERED_LIST)
-            }
-    for pattern in patterns:
-        p = patterns[pattern][0]
-        block_type = patterns[pattern][1]
-        if re.match(p,block):
-            return block_type
+    lines: list[str] = block.split("\n")
+    if block.startswith(("# ", "## ", "### ", "#### ", "##### ", "###### ")):
+        return BlockType.HEADING
+    if len(lines) > 1 and lines[0].startswith("```") and lines[-1].startswith("```"):
+        return BlockType.CODE
+    if block.startswith(">"):
+        lines = [line for line in lines if line]
+        for line in lines:
+            if not line.startswith(">"):
+                return BlockType.PARAGRAPH
+        return BlockType.QUOTE
+    if block.startswith("- "):
+        for line in lines:
+            if line and not line.startswith("- "):
+                return BlockType.PARAGRAPH
+        return BlockType.U_LIST
+    if block.startswith("1. "):
+        i = 1
+        for line in lines:
+            if line and not line.startswith(f"{i}. "):
+                return BlockType.PARAGRAPH
+            i += 1
+        return BlockType.O_LIST
+    return BlockType.PARAGRAPH
 
-    return BlockType.PARAGRAPH 
+
 
 if __name__ == "__main__":
-    md = """
+    md = textwrap.dedent("""
         This is **bolded** paragraph
 
         This is another paragraph with _italic_ text and `code` here
@@ -49,8 +61,8 @@ if __name__ == "__main__":
         3. list
 
         > and a quote
-        """
-    print(markdown_to_block(md))
+        """)
+    print(markdown_to_blocks(md))
 
-    for block in markdown_to_block(md):
+    for block in markdown_to_blocks(md):
         print(block_to_block_type(block))
