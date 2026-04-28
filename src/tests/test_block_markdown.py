@@ -104,5 +104,100 @@ class TestBlockToBlockType(unittest.TestCase):
             "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
         )
 
+
+class TestMarkdownToHtmlNode(unittest.TestCase):
+    def test_unordered_list_simple(self):
+        md = "- item1\n- item2\n- item3"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ul><li>item1</li><li>item2</li><li>item3</li></ul></div>"
+        )
+
+    def test_ordered_list_simple(self):
+        md = "1. first\n2. second\n3. third"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ol><li>first</li><li>second</li><li>third</li></ol></div>"
+        )
+
+    def test_heading_all_levels(self):
+        md = "# H1\n\n## H2\n\n### H3\n\n#### H4\n\n##### H5\n\n###### H6"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h1>H1</h1><h2>H2</h2><h3>H3</h3><h4>H4</h4><h5>H5</h5><h6>H6</h6></div>"
+        )
+
+    def test_blockquote_simple(self):
+        md = "> This is a quote"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><blockquote>This is a quote</blockquote></div>"
+        )
+
+    def test_unordered_list_with_formatting(self):
+        md = "- **bold** item\n- _italic_ item\n- `code` item"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ul><li><b>bold</b> item</li><li><i>italic</i> item</li><li><code>code</code> item</li></ul></div>"
+        )
+
+    def test_ordered_list_with_formatting(self):
+        md = "1. **first** with bold\n2. _second_ with italic\n3. [link](https://example.com)"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ol><li><b>first</b> with bold</li><li><i>second</i> with italic</li><li><a href=\"https://example.com\">link</a></li></ol></div>"
+        )
+
+    def test_blockquote_with_formatting(self):
+        md = "> A quote with **bold** and _italic_"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><blockquote>A quote with <b>bold</b> and <i>italic</i></blockquote></div>"
+        )
+
+    def test_complex_mixed_blocks(self):
+        md = """# Heading
+
+Paragraph with **formatting**.
+
+- List item
+- Another item
+
+> A quote here
+
+```
+code block
+```
+
+1. Ordered item"""
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertIn("<h1>", html)
+        self.assertIn("<p>", html)
+        self.assertIn("<ul>", html)
+        self.assertIn("<blockquote>", html)
+        self.assertIn("<pre>", html)
+        self.assertIn("<ol>", html)
+
+    def test_empty_input(self):
+        md = ""
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(html, "<div></div>")
+
 if __name__ == "__main__":
     unittest.main()
