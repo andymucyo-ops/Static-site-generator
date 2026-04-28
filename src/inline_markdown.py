@@ -3,6 +3,13 @@ from src.textnode import TextNode, TextType
 
 
 def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: TextType) -> list[TextNode]:
+    """Split text nodes on delimiter into separate nodes of specified type.
+    
+    For example, splitting on '**' with BOLD type converts 'text **bold** text'
+    into three nodes: TEXT, BOLD, TEXT.
+    
+    Raises Exception if delimiters are unbalanced (even number of delimiter occurrences).
+    """
     new_nodes: list[TextNode] = []
     for node in old_nodes:
         if node.text_type != TextType.TEXT:
@@ -12,6 +19,8 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
             split_nodes: list[TextNode] = []
             node_text: list[str] = node.text.split(delimiter)
 
+            # Check for balanced delimiters - must be odd number of parts
+            # (odd count ensures pairs with content between them)
             if len(node_text) % 2 == 0:
                 raise Exception("invalid markdown, formatted section not closed")
 
@@ -28,12 +37,28 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
     return new_nodes
 
 def extract_markdown_images(text: str) -> list[tuple[str]]:
+    """Extract markdown image syntax from text.
+    
+    Returns list of tuples (alt_text, image_url) for all images found.
+    Pattern: ![alt text](image_url)
+    """
     return re.findall(r"!\[(.*?)\]\((.*?)\)", text)
 
 def extract_markdown_links(text: str) -> list[tuple[str]]:
+    """Extract markdown link syntax from text.
+    
+    Returns list of tuples (link_text, url) for all links found.
+    Uses negative lookbehind to avoid matching image syntax.
+    Pattern: [link text](url) but not ![...](...)
+    """
     return re.findall(r"(?<!!)\[(.*?)\]\((.*?)\)", text)
 
 def split_nodes_images(old_nodes: list[TextNode]) -> list[TextNode]:
+    """Convert image markdown syntax to TextNode(IMAGE) objects.
+    
+    Splits nodes on image syntax and creates separate IMAGE type nodes
+    with URL stored in the url field.
+    """
     new_nodes: list[TextNode] = []
 
     for node in old_nodes:
@@ -59,6 +84,11 @@ def split_nodes_images(old_nodes: list[TextNode]) -> list[TextNode]:
     return new_nodes
 
 def split_nodes_links(old_nodes: list[TextNode]) -> list[TextNode]:
+    """Convert link markdown syntax to TextNode(LINK) objects.
+    
+    Splits nodes on link syntax and creates separate LINK type nodes
+    with URL stored in the url field.
+    """
     new_nodes: list[TextNode] = []
 
     for node in old_nodes:
@@ -83,6 +113,12 @@ def split_nodes_links(old_nodes: list[TextNode]) -> list[TextNode]:
     return new_nodes
 
 def text_to_textnodes(text: str) -> list[TextNode]:
+    """Convert plain text to list of TextNodes with inline formatting applied.
+    
+    Applies all inline markdown transformations: links, images, bold, italic, code.
+    Transformation order matters: links → images → bold → italic → code.
+    This prevents parsing issues (e.g., code blocks shouldn't parse **bold**).
+    """
     transformations: list[tuple] = [
         (split_nodes_links,),
         (split_nodes_images,),

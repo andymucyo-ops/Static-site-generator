@@ -6,6 +6,7 @@ import textwrap
 
 
 class BlockType(Enum):
+    """Enumeration of block-level markdown element types."""
     PARAGRAPH = "paragraph"
     HEADING = "heading"
     CODE = "code"
@@ -15,11 +16,20 @@ class BlockType(Enum):
 
 
 def markdown_to_blocks(markdown: str) -> list[str]:
+    """Split markdown string into blocks separated by blank lines.
+    
+    Splits on double newlines and strips whitespace from each block.
+    """
     block_list: list[str] = markdown.split("\n\n")
     return [s.strip() for s in block_list]
 
 
 def block_to_block_type(block: str) -> BlockType:
+    """Identify the type of a markdown block by analyzing its structure.
+    
+    Checks for heading markers, code blocks, quotes, lists, and defaults
+    to paragraph type. Properly handles indented code blocks.
+    """
     lines: list[str] = block.split("\n")
     if block.startswith(("# ", "## ", "### ", "#### ", "##### ", "###### ")):
         return BlockType.HEADING
@@ -49,6 +59,11 @@ def block_to_block_type(block: str) -> BlockType:
 
 
 def leaf_nodes(block: str) -> list[LeafNode]:
+    """Convert text content to leaf nodes with inline formatting applied.
+    
+    Normalizes whitespace by replacing newlines with spaces and collapsing
+    multiple spaces into single spaces.
+    """
     normalized_block: str = block.replace("\n", " ")
     normalized_block: str = " ".join(normalized_block.split())
     text_nodes : list[TextNode] = text_to_textnodes(normalized_block)
@@ -85,20 +100,26 @@ def leaf_nodes(block: str) -> list[LeafNode]:
 
 
 def heading_block(block: str) -> ParentNode:
+    """Convert heading markdown to ParentNode with appropriate h1-h6 tag.
+    
+    Determines heading level from number of hash symbols and strips them
+    from the content before processing.
+    """
     if block.startswith("###### "):
-        return ParentNode("h6", leaf_nodes(block))
+        return ParentNode("h6", leaf_nodes(block[7:]))
     elif block.startswith("##### "):
-        return ParentNode("h5", leaf_nodes(block))
+        return ParentNode("h5", leaf_nodes(block[6:]))
     elif block.startswith("#### "):
-        return ParentNode("h4", leaf_nodes(block))
+        return ParentNode("h4", leaf_nodes(block[5:]))
     elif block.startswith("### "):
-        return ParentNode("h3", leaf_nodes(block))
+        return ParentNode("h3", leaf_nodes(block[4:]))
     elif block.startswith("## "):
-        return ParentNode("h2", leaf_nodes(block))
+        return ParentNode("h2", leaf_nodes(block[3:]))
     else: 
-        return ParentNode("h1", leaf_nodes(block))
+        return ParentNode("h1", leaf_nodes(block[2:]))
 
 def tagged_items_Olist(block: str) -> list:
+    """Convert ordered list items to list of ParentNodes wrapped in <li> tags."""
     items: list[str]= block.split("\n")
     stripped_marked_items: list[str] = [item[3:] for item in items] 
     tagged_items = []
@@ -110,6 +131,7 @@ def tagged_items_Olist(block: str) -> list:
 
 
 def tagged_items_Ulist(block: str) -> list:
+    """Convert unordered list items to list of ParentNodes wrapped in <li> tags."""
     items: list[str]= block.split("\n")
     stripped_marked_items: list[str] = [item[2:] for item in items]
     tagged_items = []
@@ -120,6 +142,13 @@ def tagged_items_Ulist(block: str) -> list:
     return tagged_items
 
 def get_raw_code(block: str) -> str:
+    """Extract code content from backtick-delimited block and dedent.
+    
+    Removes leading/trailing empty lines and normalizes indentation
+    by finding the minimum indent across all non-empty lines and
+    removing it uniformly. This ensures indented code blocks are
+    properly normalized while preserving relative indentation.
+    """
     raw_code = block.split("```")[1]
     # Remove leading and trailing whitespace, then dedent
     lines = raw_code.split('\n')
@@ -129,7 +158,8 @@ def get_raw_code(block: str) -> str:
     while lines and not lines[-1].strip():
         lines.pop()
     
-    # Dedent: find minimum indentation
+    # Dedent: find minimum indentation across non-empty lines
+    # This ensures code indented uniformly gets properly dedented
     if lines:
         min_indent = float('inf')
         for line in lines:
@@ -137,14 +167,21 @@ def get_raw_code(block: str) -> str:
                 indent = len(line) - len(line.lstrip())
                 min_indent = min(min_indent, indent)
         
-        # Remove the minimum indentation from all lines
+        # Remove the minimum indentation from all lines to normalize
         if min_indent < float('inf'):
             lines = [line[min_indent:] if line.strip() else line for line in lines]
     
-    # Join back and add trailing newline
+    # Join back and add trailing newline for proper formatting
     return '\n'.join(lines) + '\n' 
 
 def markdown_to_html_node(markdown: str) -> ParentNode:
+    """Convert markdown string to HTML tree structure.
+    
+    Processes markdown by: splitting into blocks, identifying block types,
+    converting each block to appropriate HTML nodes, then wrapping all
+    in a root div element. Filters out empty blocks to avoid spurious
+    elements from trailing newlines.
+    """
     blocks: list[str] = markdown_to_blocks(markdown)
     blocks: list[str] = [block for block in blocks if block != ""]
     childrens: list[ParentNode] = []
