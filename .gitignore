@@ -9,5 +9,8 @@ wheels/
 # Virtual environments
 .venv
 
+# dirs and files 
+public/
+
 #agent 
 AGENTS.md
