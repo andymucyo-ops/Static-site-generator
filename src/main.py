@@ -1,9 +1,8 @@
-from src.textnode import TextNode
-from src.textnode import TextType
+from static_to_public import static_to_public
 
 def main():
-    text_node: TextNode = TextNode("dummy text", TextType.LINK, "https://www.boot.dev" )
-    print(text_node)
+    static_to_public()
+
 
 if __name__ == "__main__":
     main()
