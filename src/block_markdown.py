@@ -67,19 +67,19 @@ def leaf_nodes(block: str) -> list[LeafNode]:
     normalized_block: str = block.replace("\n", " ")
     normalized_block: str = " ".join(normalized_block.split())
     text_nodes : list[TextNode] = text_to_textnodes(normalized_block)
-    childen_nodes: list[LeafNode] = [] 
+    children_nodes: list[LeafNode] = [] 
     for node in text_nodes:
         match node.text_type:
             case TextType.TEXT:
-                childen_nodes.append(LeafNode(None, node.text))
+                children_nodes.append(LeafNode(None, node.text))
             case TextType.BOLD:
-                childen_nodes.append(LeafNode("b", node.text))
+                children_nodes.append(LeafNode("b", node.text))
             case TextType.ITALIC:
-                childen_nodes.append(LeafNode("i", node.text))
+                children_nodes.append(LeafNode("i", node.text))
             case TextType.CODE:
-                childen_nodes.append(LeafNode("code", node.text))
+                children_nodes.append(LeafNode("code", node.text))
             case TextType.IMAGE:
-                childen_nodes.append(
+                children_nodes.append(
                         LeafNode(
                             "img", node.text, 
                             {
@@ -89,14 +89,14 @@ def leaf_nodes(block: str) -> list[LeafNode]:
                                 )
                         )
             case TextType.LINK:
-                childen_nodes.append(
+                children_nodes.append(
                         LeafNode(
                             "a",
                             node.text,
                             {"href":node.url}
                             )
                         )
-    return childen_nodes
+    return children_nodes
 
 
 def heading_block(block: str) -> ParentNode:
@@ -118,7 +118,7 @@ def heading_block(block: str) -> ParentNode:
     else: 
         return ParentNode("h1", leaf_nodes(block[2:]))
 
-def tagged_items_Olist(block: str) -> list:
+def tagged_items_ordered_list(block: str) -> list:
     """Convert ordered list items to list of ParentNodes wrapped in <li> tags."""
     items: list[str]= block.split("\n")
     stripped_marked_items: list[str] = [item[3:] for item in items] 
@@ -130,7 +130,7 @@ def tagged_items_Olist(block: str) -> list:
     return tagged_items
 
 
-def tagged_items_Ulist(block: str) -> list:
+def tagged_items_unordered_list(block: str) -> list[ParentNode]:
     """Convert unordered list items to list of ParentNodes wrapped in <li> tags."""
     items: list[str]= block.split("\n")
     stripped_marked_items: list[str] = [item[2:] for item in items]
@@ -174,6 +174,16 @@ def get_raw_code(block: str) -> str:
     # Join back and add trailing newline for proper formatting
     return '\n'.join(lines) + '\n' 
 
+def clean_quotes(block: str) -> str:
+    split_block: list[str] = block.split("\n")
+    cleaned: list[str] = []
+    for line in split_block:
+        if line.startswith("> "):
+            cleaned.append(line[2:])
+        elif line.startswith(">"):
+            cleaned.append(line[1:])
+    return " ".join(cleaned)
+
 def markdown_to_html_node(markdown: str) -> ParentNode:
     """Convert markdown string to HTML tree structure.
     
@@ -184,42 +194,42 @@ def markdown_to_html_node(markdown: str) -> ParentNode:
     """
     blocks: list[str] = markdown_to_blocks(markdown)
     blocks: list[str] = [block for block in blocks if block != ""]
-    childrens: list[ParentNode] = []
+    children: list[ParentNode] = []
     for block in blocks:
         match block_to_block_type(block):
             case BlockType.HEADING:
-                childrens.append(heading_block(block))
+                children.append(heading_block(block))
             case BlockType.PARAGRAPH:
-                childrens.append(ParentNode(
+                children.append(ParentNode(
                         "p", 
                         leaf_nodes(block)
                             )
                                  )
             case BlockType.CODE:
-                childrens.append(ParentNode(
+                children.append(ParentNode(
                     "pre",
                     [LeafNode("code", get_raw_code(block))]
                     )
                                  ) 
             case BlockType.QUOTE:
-                childrens.append(ParentNode(
+                children.append(ParentNode(
                         "blockquote",
-                        leaf_nodes(block[2:])
+                        leaf_nodes(clean_quotes(block))
                             )
                                  )
             case BlockType.O_LIST:
-                tagged_items = tagged_items_Olist(block)
-                childrens.append(ParentNode(
+                tagged_items = tagged_items_ordered_list(block)
+                children.append(ParentNode(
                     "ol",
                     tagged_items
                     ))
             case BlockType.U_LIST:
-                tagged_items = tagged_items_Ulist(block)
-                childrens.append(ParentNode(
+                tagged_items = tagged_items_unordered_list(block)
+                children.append(ParentNode(
                     "ul",
                     tagged_items
                     ))
-    return ParentNode("div", childrens)
+    return ParentNode("div", children)
 
 
 if __name__ == "__main__":
