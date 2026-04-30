@@ -30,7 +30,9 @@ def generate_page(from_path: str, template_path: str, dest_path: str) -> None:
     template_content = template_content.replace("{{ Content }}", src_as_html)
 
     # print(template_content)
-    dest_path = os.path.abspath(dest_path)
+    dest_dir_path = os.path.dirname(os.path.abspath(dest_path))
+    if dest_dir_path != "":
+        os.makedirs(dest_dir_path, exist_ok=True)
     with open(dest_path, "w") as f:
         f.write(template_content)
 
