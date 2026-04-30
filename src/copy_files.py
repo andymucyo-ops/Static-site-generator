@@ -6,6 +6,7 @@ def copy_files_recursive(source_dir: str = "static", destination_dir: str = "pub
     source_path: str = os.path.abspath(source_dir)
 
     if not os.path.exists(destination_path):
+        print(f"Creating {destination_dir} directory...")
         os.mkdir(destination_path)
 
     for item in os.listdir(source_path):
