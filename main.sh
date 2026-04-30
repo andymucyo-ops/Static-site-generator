@@ -1,3 +1,4 @@
 #!/bin/bash
 
-uv run src/main.py
+uv run main.py
+cd public && uv run -m http.server 8888
