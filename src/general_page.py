@@ -2,15 +2,14 @@
 import os
 import textwrap
 from src.block_markdown import markdown_to_html_node
-from src.htmlnode import HTMLNode, ParentNode
+from src.htmlnode import HTMLNode
 
 
 def extract_title(markdown: str) -> str:
     html: HTMLNode = markdown_to_html_node(markdown)
     for node in html.children:
        if node.tag == "h1":
-           title_node: ParentNode = html.children.pop(html.children.index(node))
-           title_content: list[str] = [s.value for s in title_node.children]
+           title_content: list[str] = [s.value for s in node.children]
            return "".join(title_content).strip()
     raise Exception("no Title found")
 
@@ -70,5 +69,5 @@ if __name__ == "__main__":
     # print(markdown_to_html_node(md).to_html())
     
     # print(extract_title(md))
-    generate_page("content/index.md", "template.html", "public/index.md")
+    generate_page("content/index.md", "template.html", "public/index.html")
 
